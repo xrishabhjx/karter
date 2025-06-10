@@ -88,7 +88,7 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               
               {/* Fallback route - redirects to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<Navigate to="/\" replace />} />
             </Routes>
           </main>
           <Footer />
