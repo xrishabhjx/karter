@@ -7,7 +7,7 @@ import {
   getPaymentById,
   stripeWebhook
 } from "../controllers/paymentController.js";
-import { auth, authorize } from '../middleware/auth.js';
+import { protect, authorize } from '../middleware/auth.js';
 const router = express.Router();
 
 // @route   POST /api/payments/create-intent
@@ -15,7 +15,7 @@ const router = express.Router();
 // @access  Private
 router.post(
   '/create-intent',
-  auth,
+  protect,
   [
     check('deliveryId', 'Delivery ID is required').notEmpty(),
     check('paymentMethod', 'Payment method is required').notEmpty()
@@ -28,7 +28,7 @@ router.post(
 // @access  Private
 router.post(
   '/confirm',
-  auth,
+  protect,
   [
     check('deliveryId', 'Delivery ID is required').notEmpty(),
     check('paymentMethod', 'Payment method is required').notEmpty(),
@@ -40,12 +40,12 @@ router.post(
 // @route   GET /api/payments
 // @desc    Get user payments
 // @access  Private
-router.get('/', auth, getUserPayments);
+router.get('/', protect, getUserPayments);
 
 // @route   GET /api/payments/:id
 // @desc    Get payment by ID
 // @access  Private
-router.get('/:id', auth, getPaymentById);
+router.get('/:id', protect, getPaymentById);
 
 // @route   POST /api/payments/webhook
 // @desc    Process Stripe webhook

@@ -7,7 +7,7 @@ import {
   submitBid, 
   acceptBid 
 } from '../controllers/deliveryController.js';
-import { auth } from "../middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 
 var router = express.Router();
 
@@ -17,7 +17,7 @@ var router = express.Router();
 router.post(
   '/:id/rate',
   [
-    auth,
+    protect,
     check('rating', 'Rating is required').isInt({ min: 1, max: 5 }),
     check('comment', 'Comment is optional').optional().isString()
   ],
@@ -27,7 +27,7 @@ router.post(
 // @route   GET /api/deliveries/active
 // @desc    Get user's active deliveries
 // @access  Private
-router.get('/active', auth, getActiveDeliveries);
+router.get('/active', protect, getActiveDeliveries);
 
 // @route   POST /api/deliveries/custom-bid
 // @desc    Create custom bid delivery
@@ -35,7 +35,7 @@ router.get('/active', auth, getActiveDeliveries);
 router.post(
   '/custom-bid',
   [
-    auth,
+    protect,
     check('pickupLocation', 'Pickup location is required').not().isEmpty(),
     check('dropLocation', 'Drop location is required').not().isEmpty(),
     check('packageDetails', 'Package details are required').not().isEmpty(),
@@ -52,7 +52,7 @@ router.post(
 router.post(
   '/:id/bid',
   [
-    auth,
+    protect,
     check('price', 'Bid price is required').isNumeric(),
     check('estimatedPickupTime', 'Estimated pickup time is required').not().isEmpty(),
     check('message', 'Message is optional').optional().isString()
@@ -66,7 +66,7 @@ router.post(
 router.post(
   '/:id/accept-bid/:bidId',
   [
-    auth,
+    protect,
     check('paymentMethod', 'Payment method is optional').optional().isString()
   ],
   acceptBid

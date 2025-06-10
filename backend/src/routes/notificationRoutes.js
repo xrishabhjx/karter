@@ -8,7 +8,7 @@ import {
   getNotificationCount, 
   createNotification 
 } from '../controllers/notificationController.js';
-import { auth } from "../middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 
 var router = express.Router();
 
@@ -18,7 +18,7 @@ var router = express.Router();
 router.get(
   '/',
   [
-    auth
+    protect
   ],
   getUserNotifications
 );
@@ -29,7 +29,7 @@ router.get(
 router.put(
   '/:id/read',
   [
-    auth
+    protect
   ],
   markAsRead
 );
@@ -40,7 +40,7 @@ router.put(
 router.put(
   '/read-all',
   [
-    auth
+    protect
   ],
   markAllAsRead
 );
@@ -51,7 +51,7 @@ router.put(
 router.delete(
   '/:id',
   [
-    auth
+    protect
   ],
   deleteNotification
 );
@@ -62,7 +62,7 @@ router.delete(
 router.get(
   '/count',
   [
-    auth
+    protect
   ],
   getNotificationCount
 );
@@ -73,7 +73,7 @@ router.get(
 router.post(
   '/',
   [
-    auth,
+    protect,
     check('recipient', 'Recipient ID is required').not().isEmpty(),
     check('type', 'Notification type is required').not().isEmpty(),
     check('title', 'Notification title is required').not().isEmpty(),

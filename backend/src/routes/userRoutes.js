@@ -12,7 +12,7 @@ import {
   checkPartnerStatus, 
   deleteAccount 
 } from '../controllers/userController.js';
-import { auth } from "../middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 
 var router = express.Router()
 
@@ -22,7 +22,7 @@ var router = express.Router()
 router.put(
   '/profile',
   [
-    auth,
+    protect,
     check('name', 'Name is required').optional(),
     check('phone', 'Please enter a valid phone number').optional().matches(/^[0-9]{10}$/)
   ],
@@ -35,7 +35,7 @@ router.put(
 router.post(
   '/addresses',
   [
-    auth,
+    protect,
     check('address', 'Address is required').not().isEmpty(),
     check('coordinates', 'Coordinates are required').isArray()
   ],
@@ -48,7 +48,7 @@ router.post(
 router.put(
   '/addresses/:addressId',
   [
-    auth,
+    protect,
     check('address', 'Address is required').optional()
   ],
   updateAddress
@@ -57,36 +57,36 @@ router.put(
 // @route   DELETE /api/users/addresses/:addressId
 // @desc    Delete user address
 // @access  Private
-router.delete('/addresses/:addressId', auth, deleteAddress);
+router.delete('/addresses/:addressId', protect, deleteAddress);
 
 // @route   GET /api/users/addresses
 // @desc    Get user addresses
 // @access  Private
-router.get('/addresses', auth, getAddresses);
+router.get('/addresses', protect, getAddresses);
 
 // @route   GET /api/users/deliveries
 // @desc    Get user deliveries
 // @access  Private
-router.get('/deliveries', auth, getUserDeliveries);
+router.get('/deliveries', protect, getUserDeliveries);
 
 // @route   GET /api/users/deliveries/:deliveryId
 // @desc    Get user delivery by ID
 // @access  Private
-router.get('/deliveries/:deliveryId', auth, getUserDeliveryById);
+router.get('/deliveries/:deliveryId', protect, getUserDeliveryById);
 
 // @route   GET /api/users/dashboard
 // @desc    Get user dashboard stats
 // @access  Private
-router.get('/dashboard', auth, getDashboardStats);
+router.get('/dashboard', protect, getDashboardStats);
 
 // @route   GET /api/users/is-partner
 // @desc    Check if user is a partner
 // @access  Private
-router.get('/is-partner', auth, checkPartnerStatus);
+router.get('/is-partner', protect, checkPartnerStatus);
 
 // @route   DELETE /api/users
 // @desc    Delete user account
 // @access  Private
-router.delete('/', auth, deleteAccount);
+router.delete('/', protect, deleteAccount);
 
 export default router

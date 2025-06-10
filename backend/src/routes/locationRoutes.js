@@ -7,7 +7,7 @@ import {
   getPlaceAutocomplete, 
   getPlaceDetails 
 } from '../controllers/locationController.js';
-import { auth } from "../middleware/auth.js";
+import { protect } from "../middleware/auth.js";
 
 var router = express.Router();
 
@@ -17,7 +17,7 @@ var router = express.Router();
 router.post(
   '/geocode',
   [
-    auth,
+    protect,
     check('address', 'Address is required').not().isEmpty()
   ],
   geocodeAddress
@@ -29,7 +29,7 @@ router.post(
 router.post(
   '/reverse-geocode',
   [
-    auth,
+    protect,
     check('latitude', 'Latitude is required').isDecimal(),
     check('longitude', 'Longitude is required').isDecimal()
   ],
@@ -42,7 +42,7 @@ router.post(
 router.post(
   '/directions',
   [
-    auth,
+    protect,
     check('origin', 'Origin is required').not().isEmpty(),
     check('destination', 'Destination is required').not().isEmpty(),
     check('mode', 'Mode is optional but should be a valid transport mode').optional().isIn(['driving', 'walking', 'bicycling', 'transit'])
@@ -56,7 +56,7 @@ router.post(
 router.get(
   '/autocomplete',
   [
-    auth,
+    protect,
     check('input', 'Input is required').not().isEmpty()
   ],
   getPlaceAutocomplete
@@ -68,7 +68,7 @@ router.get(
 router.get(
   '/place/:placeId',
   [
-    auth
+    protect
   ],
   getPlaceDetails
 );

@@ -14,37 +14,37 @@ import {
   updateDeliveryStatus,
   getEarnings
 } from '../controllers/partnerController.js';
-import { auth, authorize } from '../middleware/auth.js';
+import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // Partner registration
-router.post('/register', auth, registerPartner);
+router.post('/register', protect, registerPartner);
 
 // Vehicle routes
-router.post('/vehicles', auth, authorize('partner'), addVehicle);
-router.put('/vehicles/:vehicleId', auth, authorize('partner'), updateVehicle);
-router.get('/vehicles', auth, authorize('partner'), getVehicles);
+router.post('/vehicles', protect, authorize('partner'), addVehicle);
+router.put('/vehicles/:vehicleId', protect, authorize('partner'), updateVehicle);
+router.get('/vehicles', protect, authorize('partner'), getVehicles);
 
 // Profile update
-router.put('/profile', auth, authorize('partner'), updatePartnerProfile);
+router.put('/profile', protect, authorize('partner'), updatePartnerProfile);
 
 // Location update
-router.put('/location', auth, authorize('partner'), updateLocation);
+router.put('/location', protect, authorize('partner'), updateLocation);
 
 // Availability update
-router.put('/availability', auth, authorize('partner'), updateAvailability);
+router.put('/availability', protect, authorize('partner'), updateAvailability);
 
 // Partner dashboard stats
-router.get('/dashboard', auth, authorize('partner'), getDashboardStats);
+router.get('/dashboard', protect, authorize('partner'), getDashboardStats);
 
 // Partner deliveries
-router.get('/deliveries', auth, authorize('partner'), getPartnerDeliveries);
-router.get('/nearby-requests', auth, authorize('partner'), getNearbyRequests);
-router.post('/deliveries/:deliveryId/accept', auth, authorize('partner'), acceptDelivery);
-router.put('/deliveries/:deliveryId/status', auth, authorize('partner'), updateDeliveryStatus);
+router.get('/deliveries', protect, authorize('partner'), getPartnerDeliveries);
+router.get('/nearby-requests', protect, authorize('partner'), getNearbyRequests);
+router.post('/deliveries/:deliveryId/accept', protect, authorize('partner'), acceptDelivery);
+router.put('/deliveries/:deliveryId/status', protect, authorize('partner'), updateDeliveryStatus);
 
 // Partner earnings
-router.get('/earnings', auth, authorize('partner'), getEarnings);
+router.get('/earnings', protect, authorize('partner'), getEarnings);
 
 export default router;
