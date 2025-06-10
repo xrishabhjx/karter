@@ -11,8 +11,6 @@ import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
 import logger from './utils/logger.js';
 import limiter from './middleware/rateLimiter.js';
-import passport from './config/passport.js';
-
 
 // Import routes
 import authRoutes from "./routes/authRoutes.js"; 
@@ -21,10 +19,7 @@ import partnerRoutes from './routes/partnerRoutes.js';
 import deliveryRoutes from './routes/deliveryRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
-// import vehicleRoutes from './routes/vehicleRoutes.js';
-// import reviewRoutes from './routes/reviewRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
-// import webhookRoutes from './routes/webhookRoutes.js';
 import EnterpriseForm from './models/EnterpriseForm.js';
 
 // Initialize Express app
@@ -40,31 +35,35 @@ connectDB().catch((err) => {
 // Initialize Socket.io
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.SOCKET_CORS_ORIGIN || '*',
+    origin: process.env.SOCKET_CORS_ORIGIN || 'http://localhost:5173',
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
-// Ensure socket module exists before requiring it
-import socketHandler from './socket/index.js';
+// Socket handler
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
 
-try {
-  socketHandler(io);
-} catch (err) {
-  logger.error(`Socket Module Error: ${err.message}`);
-}
+  socket.on('message', (data) => {
+    console.log('Received message:', data);
+    io.emit('message', data); // Broadcast to all clients
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
 
 // Middleware
 app.use(helmet()); // Security headers
 app.use(morgan('dev')); // Logging
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
   credentials: true
 }));
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(passport.initialize()); // Initialize Passport
 
 // Apply rate limiter to all requests
 app.use(limiter);
@@ -82,10 +81,7 @@ app.use('/api/partners', partnerRoutes);
 app.use('/api/deliveries', deliveryRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/locations', locationRoutes);
-// app.use('/api/vehicles', vehicleRoutes);
-// app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
-// app.use('/api/webhooks', webhookRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -95,6 +91,43 @@ app.get('/health', (req, res) => {
 // Root endpoint
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Welcome to KARTER API' });
+});
+
+// Enterprise form endpoint
+app.post('/enterprise', express.json(), async (req, res) => {
+  try {
+    const form = new EnterpriseForm(req.body);
+    await form.save();
+    res.status(201).json({ message: 'Form saved successfully!' });
+  } catch (err) {
+    console.error('Error saving form:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Mock deliveries endpoint for testing
+app.get('/api/deliveries', (req, res) => {
+  const dummyDeliveries = [
+    { 
+      id: 'KTR12345678', 
+      status: "in-progress", 
+      date: "2024-03-20",
+      time: "14:30",
+      pickupLocation: "Sector 18, Noida, UP",
+      dropLocation: "Connaught Place, New Delhi",
+      price: 149.99
+    },
+    { 
+      id: 'KTR87654321', 
+      status: "pending", 
+      date: "2024-03-22",
+      time: "16:00",
+      pickupLocation: "Lajpat Nagar, New Delhi",
+      dropLocation: "Saket, New Delhi",
+      price: 99.50
+    }
+  ];
+  res.json(dummyDeliveries);
 });
 
 // Error handling middleware
@@ -118,23 +151,3 @@ process.on('unhandledRejection', (err) => {
 });
 
 export { app, httpServer };
-
-app.post('/enterprise', express.json(), async (req, res) => {
-  try {
-    const form = new EnterpriseForm(req.body);
-    await form.save();
-    res.status(201).json({ message: 'Form saved successfully!' });
-  } catch (err) {
-    console.error('Error saving form:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-app.get('/api/deliveries', (req, res) => {
-  const dummyDeliveries = [
-    { id: 1, status: "Delivered", date: "2024-03-20" },
-    { id: 2, status: "In Transit", date: "2024-03-22" }
-  ];
-  res.json(dummyDeliveries);
-});
-

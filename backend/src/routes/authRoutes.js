@@ -1,5 +1,6 @@
 import express from "express";
-import { loginUser, registerUser } from "../controllers/authController.js";
+import { loginUser, registerUser, getMe, updateProfile } from "../controllers/authController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -13,5 +14,14 @@ router.post("/register", registerUser);
 // @access  Public
 router.post("/login", loginUser);
 
-// ✅ Export the router
+// @route   GET /api/auth/me
+// @desc    Get current user
+// @access  Private
+router.get("/me", protect, getMe);
+
+// @route   PUT /api/auth/profile
+// @desc    Update user profile
+// @access  Private
+router.put("/profile", protect, updateProfile);
+
 export default router;

@@ -1,7 +1,5 @@
 // Authentication context provider for managing user authentication state
-// Authentication context provider for managing user authentication state
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { User } from '../types';
 import toast from 'react-hot-toast';
 
@@ -11,10 +9,8 @@ import toast from 'react-hot-toast';
  * - User authentication state
  * - Login/Logout functionality
  * - Registration
- * - OAuth integration
  * - Session management
  */
-// Define the shape of our authentication context
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -24,30 +20,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   googleLogin: () => Promise<void>;
 }
-
-// Get environment variables for Supabase configuration
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Validate environment variables
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables');
-}
-
-// Initialize Supabase client with authentication configuration
-// Initialize Supabase client with authentication configuration
-const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || '',
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      flowType: 'pkce'
-    }
-  }
-);
 
 // Create the authentication context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -62,131 +34,35 @@ export const useAuth = () => {
 };
 
 // Authentication Provider Component
-/**
- * AuthProvider - Main authentication context provider component
- * Handles:
- * - User session management
- * - Authentication state updates
- * - Profile management
- * - OAuth flows
- */
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Initialize authentication state and set up listeners
-  // Initialize authentication state and set up listeners
+  // Initialize authentication state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Get current session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
-
-        if (session?.user) {
-          await handleUserSession(session.user);
+        // Check for stored user data
+        const storedUser = localStorage.getItem('karter_user');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
+        localStorage.removeItem('karter_user');
       } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
-
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session);
-        
-        if (session?.user) {
-          await handleUserSession(session.user);
-        } else {
-          setUser(null);
-          localStorage.removeItem('karter_user');
-        }
-      }
-    );
-
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
   }, []);
 
-  // Handle user session data
-  const handleUserSession = async (authUser: any) => {
-    try {
-      // Get user profile data from Supabase
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // Ignore "not found" error for new users
-        throw error;
-      }
-
-      // Create user data object
-      const userData: User = {
-        id: authUser.id,
-        name: profile?.name || authUser.user_metadata?.full_name || authUser.user_metadata?.name || 'User',
-        email: authUser.email || '',
-        phone: profile?.phone || authUser.user_metadata?.phone || '',
-        role: profile?.role || 'user',
-        verified: true,
-        profileImage: authUser.user_metadata?.avatar_url || profile?.profileImage,
-      };
-
-      // Create profile if it doesn't exist
-      if (!profile) {
-        console.log('Creating new user profile:', userData);
-        const { error: createError } = await supabase
-          .from('profiles')
-          .insert([{
-            id: userData.id,
-            name: userData.name,
-            email: userData.email,
-            phone: userData.phone,
-            role: userData.role,
-            profileImage: userData.profileImage,
-          }]);
-
-        if (createError) throw createError;
-      }
-
-      setUser(userData);
-      localStorage.setItem('karter_user', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Error handling user session:', error);
-      toast.error('Error loading user profile');
-    }
-  };
-
   // Google OAuth login
-  // Google OAuth login handler
   const googleLogin = async () => {
     try {
-      console.log('Initiating Google login...');
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (error) {
-        console.error('Google OAuth error:', error);
-        throw error;
-      }
-
-      console.log('Google OAuth response:', data);
+      console.log('Google login not implemented yet');
+      toast.error('Google login will be available soon');
     } catch (error) {
       console.error('Google login error:', error);
       toast.error('Failed to login with Google. Please try again.');
@@ -195,24 +71,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Email/Password login
-  // Email/Password login handler
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        await handleUserSession(data.user);
-        toast.success('Login successful');
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
+
+      const userData: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone || '',
+        role: data.user.role || 'user',
+        verified: true,
+        profileImage: data.user.profileImage,
+      };
+
+      setUser(userData);
+      localStorage.setItem('karter_user', JSON.stringify(userData));
+      toast.success('Login successful');
     } catch (error) {
       console.error('Login failed:', error);
-      toast.error('Login failed. Please check your credentials.');
+      toast.error(error instanceof Error ? error.message : 'Login failed. Please check your credentials.');
       throw error;
     } finally {
       setLoading(false);
@@ -220,31 +111,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // User registration
-  // User registration handler
   const register = async (userData: Partial<User>, password: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email || '',
-        password,
-        options: {
-          data: {
-            name: userData.name,
-            phone: userData.phone,
-            role: userData.role || 'user',
-          }
-        }
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          password,
+          role: userData.role || 'user',
+        }),
       });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        await handleUserSession(data.user);
-        toast.success('Registration successful');
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
+
+      const newUser: User = {
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone || '',
+        role: data.user.role || 'user',
+        verified: true,
+        profileImage: data.user.profileImage,
+      };
+
+      setUser(newUser);
+      localStorage.setItem('karter_user', JSON.stringify(newUser));
+      toast.success('Registration successful');
     } catch (error) {
       console.error('Registration failed:', error);
-      toast.error('Registration failed. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Registration failed. Please try again.');
       throw error;
     } finally {
       setLoading(false);
@@ -254,7 +159,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // User logout
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem('karter_user');
       toast.success('Logged out successfully');

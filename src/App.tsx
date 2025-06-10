@@ -1,6 +1,7 @@
 // Main application component that handles routing and layout
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
@@ -41,6 +42,7 @@ import ContactPage from './pages/ContactPage';
  * - Authentication context
  * - Routing configuration
  * - Main layout structure (Navbar, main content, Footer)
+ * - Toast notifications
  */
 function App() {
   return (
@@ -91,6 +93,30 @@ function App() {
           </main>
           <Footer />
         </div>
+        
+        {/* Toast notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              style: {
+                background: '#10B981',
+              },
+            },
+            error: {
+              duration: 5000,
+              style: {
+                background: '#EF4444',
+              },
+            },
+          }}
+        />
       </Router>
     </AuthProvider>
   );
